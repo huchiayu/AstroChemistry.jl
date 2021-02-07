@@ -1,1 +1,17 @@
-/Manifest.toml
+.ipynb_checkpoints/
+
+### Job-submitting script ###
+jlrun.sh
+
+### Backup ###
+*.bak
+*~
+*#
+
+### Figures ###
+*.png
+
+### Log files ###
+log.*
+
+.DS_Store
