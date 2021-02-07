@@ -1,4 +1,4 @@
-push!(LOAD_PATH, pwd())
+#push!(LOAD_PATH, pwd())
 module AstroChemistry
 
 species_noneq = []
