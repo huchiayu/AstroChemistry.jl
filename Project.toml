@@ -1,0 +1,13 @@
+name = "AstroChemistry"
+uuid = "7f947402-6d9b-49de-a6e7-82c660dce669"
+authors = ["Chia-Yu Hu <cyhu.astro@gmail.com> and contributors"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
