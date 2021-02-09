@@ -8,6 +8,8 @@ const grRec = true
 
 println(@__DIR__)
 println(@__FILE__)
+println(PROGRAM_FILE)
+println(abspath(PROGRAM_FILE))
 
 export solve_equilibrium_abundances, calc_abund_derived, init_abund
 export calc_coeff!
@@ -73,7 +75,7 @@ end
 reduced_network = umist[reac_num,:]
 
 #add 7 more reactions (H2 & CO dissociation & grain-processes)
-more_reactions = readdlm("src/user-rates.txt",':')
+more_reactions = readdlm((@__DIR__)*"/user-rates.txt",':')
 reduced_network = vcat(reduced_network, more_reactions);
 const N_reac = size(reduced_network, 1)
 #@show N_reac, N_spec
