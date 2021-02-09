@@ -6,6 +6,9 @@ const N_neq = length(species_noneq)
 const NONEQ = N_neq > 0
 const grRec = true
 
+println(@__DIR__)
+println(@__FILE__)
+
 export solve_equilibrium_abundances, calc_abund_derived, init_abund
 export calc_coeff!
 export kH2diss, kdust
