@@ -70,10 +70,10 @@ end
 reduced_network = umist[reac_num,:]
 
 #add 7 more reactions (H2 & CO dissociation & grain-processes)
-more_reactions = readdlm("user-rates.txt",':')
+more_reactions = readdlm("src/user-rates.txt",':')
 reduced_network = vcat(reduced_network, more_reactions);
 const N_reac = size(reduced_network, 1)
-@show N_reac, N_spec
+#@show N_reac, N_spec
 
 dict = Dict(all_species .=> collect(1:N_spec) );
 dict[""] = dict["PHOTON"] = dict["CRP"] = dict["CRPHOT"] = 0
@@ -105,7 +105,7 @@ function get_idx_integrate(elements)
     #species_derived = ["e-", "H", "He", "C", "O", "Si", "S"]
     species_derived = unique_elements
     push!(species_derived, "e-")
-    @show species_derived
+    #@show species_derived
 
     if NONEQ
         for i in 1:N_neq

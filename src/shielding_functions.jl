@@ -1,7 +1,7 @@
 #using DelimitedFiles
 #using StaticArrays
 
-ssCO = readdlm("CO_shielding_functions/shield.03.5.69-557-36.dat"); #CO linewidth = 0.3, T_ex = 5
+ssCO = readdlm("src/CO_shielding_functions/shield.03.5.69-557-36.dat"); #CO linewidth = 0.3, T_ex = 5
 const Nbin_nco = 46
 const Nbin_nh2 = 41
 const Nco = SVector{Nbin_nco,Float64}(ssCO[10:55])

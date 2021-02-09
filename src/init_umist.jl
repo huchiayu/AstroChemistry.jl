@@ -175,7 +175,7 @@ end
 #breakdown_species(s)
 
 #read UMIST table
-umist = readdlm("RATE12.dist.txt",':')
+umist = readdlm("src/RATE12.dist.txt",':')
 
 ###### specific reactions
 #=
