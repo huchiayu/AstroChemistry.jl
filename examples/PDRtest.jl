@@ -12,9 +12,9 @@ using PyPlot
 
 species_noneq = []
 #species_noneq = ["H2", "H+"]
-const N_neq = length(species_noneq)
-const NONEQ = N_neq > 0
-const grRec = false
+#const N_neq = length(species_noneq)
+#const NONEQ = N_neq > 0
+#const grRec = false
 
 #include("AstroChemistry.jl")
 using AstroChemistry

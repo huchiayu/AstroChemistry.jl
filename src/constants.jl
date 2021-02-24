@@ -67,7 +67,7 @@ const gamma_CO = 3.51
 
 const iCion = 0
 const SupTh = false
-#const grRec = false
+const grRec = false
 #const grRec = true
 const ssC = false
 
