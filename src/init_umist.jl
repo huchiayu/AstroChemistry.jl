@@ -174,8 +174,6 @@ end
 #s="HSi3Mg2+"
 #breakdown_species(s)
 
-#read UMIST table
-umist = readdlm((@__DIR__)*"/RATE12.dist.txt",':')
 
 ###### specific reactions
 #=

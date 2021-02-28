@@ -1,4 +1,3 @@
-
 function grain_recomb_H(Temp, psi)
     @assert (Temp > 0.0 && psi > 0.0)
     return 12.25e-14 / (1.0 + 8.074e-6 * psi^1.378 * (1.0 + 508.7*Temp^0.01586*psi^(-0.4723-1.102e-5*log(Temp))))

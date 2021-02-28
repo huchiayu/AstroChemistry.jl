@@ -9,8 +9,10 @@ using .Threads
 using Serialization
 using Random
 using PyPlot
+using Parameters
+using BenchmarkTools
 
-species_noneq = []
+#species_noneq = []
 #species_noneq = ["H2", "H+"]
 #const N_neq = length(species_noneq)
 #const NONEQ = N_neq > 0
@@ -20,9 +22,8 @@ species_noneq = []
 using AstroChemistry
 
 
-T = Float64
 const N = 3
-
+#=
 function test(npix)
     nH = 1.
     temp = 20.0
@@ -43,7 +44,7 @@ function test(npix)
     solve_equilibrium_abundances(abund, dtime, par)
 end
 test(1);
-
+=#
 const Nbin = 200
 const xmin = 16.
 const xmax = 23.
@@ -54,7 +55,33 @@ xl = "NH [cm^-2]"
 const xmin = 16.
 const xmax = 23.
 
+
 function runPDR()
+
+    T = Float64
+
+    all_species::Vector{String} =
+    [
+    "H", "H-", "H2", "H+", "H2+", "H3+", "e-", "He", "He+", "HeH+",
+    "C", "C+", "CO", "HCO+",
+    "O", "O+", "OH", "OH+", "H2O+", "H3O+", "H2O",
+    "O2", "CO+", "O2+",
+    "CH2", "CH2+", "CH", "CH+", "CH3+",
+    "Si+", "Si"
+    #"SiO", "SiO+", "SiOH+",
+    #"S", "S+",
+    ]
+
+    #species_noneq=String[]
+    #net::Network{31,286,25,0,Float64}, dict = initialize_chemistry_network(all_species, species_noneq)
+    #net, dict = initialize_chemistry_network(all_species)
+    net, dict = initialize_chemistry_network(all_species, grRec=false, T=T)
+    #net, dict = initialize_chemistry_network(all_species, species_noneq)
+    @unpack iH2, iCO, iC, fac_H, fac_C, fac_O, charge = net
+    abtot = AbundTotal(abC_s=1e-4, abO_s=3e-4)
+    @unpack abC_s, abO_s, abSi_s = abtot
+
+
     nH = 1000.
     temp = 50.0
     ξ = 0.5e-16 #H2
@@ -62,7 +89,9 @@ function runPDR()
     Zp = 1.0
     dtime = 1e10
 
-    ab_vs_x = Vector{Vector{Float64}}(undef, Nbin)
+    N_spec = length(all_species)
+    @show N_spec
+    ab_vs_x = Vector{Vector{T}}(undef, Nbin)
     for i in 1:Nbin
         ab_vs_x[i] = zeros(N_spec)
     end
@@ -74,9 +103,10 @@ function runPDR()
     NH2bin = zeros(Nbin)
     NCObin = zeros(Nbin)
     NCbin = zeros(Nbin)
-
+    N_reac = length(net.alpha)
     reaction_rates=zeros(Nbin, N_reac)
 
+    #@time for i in 1:1
     @time for i in eachindex(NHbin)
         xH2 = getindex.(ab_vs_x, iH2)
         xCO = getindex.(ab_vs_x, iCO)
@@ -92,20 +122,20 @@ function runPDR()
         NCObin[i] = NCO
         NCbin[i] = NC
         #@show i, NH, NH2,NCO, NC
-        print(i," ")
+        #print(i," ")
 
 
         G = 2.8e-5 # for Zp = 1
-        αG = IUV * kH2diss / kdust / nH * G
-        i==1 ? println("αG/2 = ", αG/2) : nothing
+        αG = IUV * AstroChemistry.kH2diss / AstroChemistry.kdust / nH * G
+        #i==1 ? println("αG/2 = ", αG/2) : nothing
 
         xneq = SVector{0,T}([])
-        par = Par(nH, temp, ξ, IUV, Zp, SVector{1,T}(NH), SVector{1,T}(NH2), SVector{1,T}(NCO), SVector{1,T}(NC), xneq)
+        par = Par{1,0,T}(nH, temp, ξ, IUV, Zp, SVector{1,T}(NH), SVector{1,T}(NH2), SVector{1,T}(NCO), SVector{1,T}(NC), xneq)
 
-        #abund_eq, reaction_rates[i,:] =
-        solve_equilibrium_abundances(ab_vs_x[i], dtime, par)
+        retcode, reaction_rates[i,:] = solve_equilibrium_abundances(ab_vs_x[i], dtime, par, abtot, net)
+        #solve_equilibrium_abundances(ab_vs_x[i], dtime, par, abtot, net)
 
-        calc_abund_derived(ab_vs_x[i], Zp, xneq)
+        calc_abund_derived(ab_vs_x[i], Zp, xneq, abtot, net)
         sumH  = sum( ab_vs_x[i] .* fac_H )
         sumC  = sum( ab_vs_x[i] .* fac_C )
         sumO  = sum( ab_vs_x[i] .* fac_O )
@@ -120,19 +150,25 @@ function runPDR()
         (1.0 ≈ 1.0 + sumelec) ? nothing : error("sumelec = ",sumelec)
     end
 
-    return ab_vs_x, NHbin, NH2bin, NCObin, NCbin, reaction_rates
+    return ab_vs_x, NHbin, NH2bin, NCObin, NCbin, reaction_rates, dict, net
+    #net
 end
 
-ab_vs_x, N_H, N_H2, N_CO, N_C, rr = runPDR();
+#@code_warntype runPDR();
+#@time runPDR();
+
+
+
+ab_vs_x, N_H, N_H2, N_CO, N_C, rr, dict, net = runPDR();
+
 
 xbin = 10 .^ (xmin .+ (xmax-xmin) .* collect(0:Nbin-1) ./ (Nbin-1));
-
 
 clf()
 fig, ax = PyPlot.subplots(1, 3, figsize=(15,5))
 
-abC_tot  = [sum(ab_vs_x[i] .* fac_C)  for i in 1:Nbin]
-abO_tot  = [sum(ab_vs_x[i] .* fac_O)  for i in 1:Nbin]
+#abC_tot  = [sum(ab_vs_x[i] .* fac_C)  for i in 1:Nbin]
+#abO_tot  = [sum(ab_vs_x[i] .* fac_O)  for i in 1:Nbin]
 #abSi_tot = [sum(ab_vs_x[i] .* fac_Si) for i in 1:Nbin]
 #abS_tot  = [sum(ab_vs_x[i] .* fac_S)  for i in 1:Nbin]
 
