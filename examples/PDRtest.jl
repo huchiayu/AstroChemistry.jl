@@ -1,4 +1,3 @@
-#push!(LOAD_PATH, pwd())
 #import Pkg; Pkg.add("HDF5"); Pkg.add("StaticArrays"); Pkg.add("PyPlot"); Pkg.add("DifferentialEquations"); Pkg.add("Parameters"); Pkg.add("Sundials");
 
 using HDF5
@@ -12,39 +11,10 @@ using PyPlot
 using Parameters
 using BenchmarkTools
 
-#species_noneq = []
-#species_noneq = ["H2", "H+"]
-#const N_neq = length(species_noneq)
-#const NONEQ = N_neq > 0
-#const grRec = false
-
-#include("AstroChemistry.jl")
 using AstroChemistry
 
 
 const N = 3
-#=
-function test(npix)
-    nH = 1.
-    temp = 20.0
-    ξ = 1.3e-17 #H2
-    IUV = 10.0
-    Zp = 1.0
-    abund = zeros(N_spec)
-    dtime = 1e7
-    NH, NH2, NCO, NC = 2.04e21, 8.75e19, 1.37e15, 8.28e16
-    xneq = SVector{0,T}([])
-    par = Par(nH, temp, ξ, IUV, Zp,
-            SVector{npix,T}(ones(npix).*NH),
-            SVector{npix,T}(ones(npix).*NH2),
-            SVector{npix,T}(ones(npix).*NCO),
-            SVector{npix,T}(ones(npix).*NC),
-            xneq)
-
-    solve_equilibrium_abundances(abund, dtime, par)
-end
-test(1);
-=#
 const Nbin = 200
 const xmin = 16.
 const xmax = 23.
@@ -72,13 +42,9 @@ function runPDR()
     #"S", "S+",
     ]
 
-    #species_noneq=String[]
-    #net::Network{31,286,25,0,Float64}, dict = initialize_chemistry_network(all_species, species_noneq)
-    #net, dict = initialize_chemistry_network(all_species)
-    net, dict = initialize_chemistry_network(all_species, grRec=false, T=T)
-    #net, dict = initialize_chemistry_network(all_species, species_noneq)
+    net, dict = initialize_chemistry_network(all_species, grRec=false)
     @unpack iH2, iCO, iC, fac_H, fac_C, fac_O, charge = net
-    abtot = AbundTotal(abC_s=1e-4, abO_s=3e-4)
+    abtot = AbundTotal(abC_s=1e-4, abO_s=3e-4, abSi_s=0.0)
     @unpack abC_s, abO_s, abSi_s = abtot
 
 
@@ -133,7 +99,6 @@ function runPDR()
         par = Par{1,0,T}(nH, temp, ξ, IUV, Zp, SVector{1,T}(NH), SVector{1,T}(NH2), SVector{1,T}(NCO), SVector{1,T}(NC), xneq)
 
         retcode, reaction_rates[i,:] = solve_equilibrium_abundances(ab_vs_x[i], dtime, par, abtot, net)
-        #solve_equilibrium_abundances(ab_vs_x[i], dtime, par, abtot, net)
 
         calc_abund_derived(ab_vs_x[i], Zp, xneq, abtot, net)
         sumH  = sum( ab_vs_x[i] .* fac_H )
@@ -151,16 +116,9 @@ function runPDR()
     end
 
     return ab_vs_x, NHbin, NH2bin, NCObin, NCbin, reaction_rates, dict, net
-    #net
 end
 
-#@code_warntype runPDR();
-#@time runPDR();
-
-
-
 ab_vs_x, N_H, N_H2, N_CO, N_C, rr, dict, net = runPDR();
-
 
 xbin = 10 .^ (xmin .+ (xmax-xmin) .* collect(0:Nbin-1) ./ (Nbin-1));
 
@@ -231,4 +189,4 @@ ax2.set_xscale("log")
 ax2.set_yscale("log")
 
 tight_layout()
-savefig("PDR_test.png")
+savefig("PDRtest.png")

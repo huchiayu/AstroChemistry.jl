@@ -1,4 +1,4 @@
-#module OctTree
+module OctTree
 using StaticArrays
 using Healpix
 const NSIDE = 1
@@ -310,4 +310,4 @@ function buildtree(X::Vector{SVector{N,T}}, hsml::Vector{T}, mass::Vector{T},
     return tree
 end
 
-#end #module OctTree
+end #module OctTree

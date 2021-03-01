@@ -1,4 +1,4 @@
-#module GadgetReader
+module GadgetReader
 using HDF5
 export read_snap
 
@@ -20,28 +20,29 @@ function read_snap(filename)
     #scal::Vector{T}       = h5read(filename, "PartType0/PassiveScalarField");
 
     id_gas::Vector{Int64} = h5read(filename, "PartType0/ParticleIDs");
-    abund::Matrix{T} = h5read(filename, "PartType0/ChemicalAbundancesSG");
-    fH2ss::Vector{T}    = h5read(filename, "PartType0/ShieldingFactorH2");
-    fH2dust::Vector{T}    = h5read(filename, "PartType0/ShieldingFactorDust");
 
-    col_tot::Matrix{T}    = h5read(filename, "PartType0/TreecolColumnDensitiesAll");
-    col_H2::Matrix{T}    = h5read(filename, "PartType0/TreecolColumnDensitiesH2");
-    col_CO::Matrix{T}    = h5read(filename, "PartType0/TreecolColumnDensitiesCO");
+    #abund::Matrix{T} = h5read(filename, "PartType0/ChemicalAbundancesSG");
+    #fH2ss::Vector{T}    = h5read(filename, "PartType0/ShieldingFactorH2");
+    #fH2dust::Vector{T}    = h5read(filename, "PartType0/ShieldingFactorDust");
 
-    Tdust::Vector{T}    = h5read(filename, "PartType0/DustTemperature");
+    #col_tot::Matrix{T}    = h5read(filename, "PartType0/TreecolColumnDensitiesAll");
+    #col_H2::Matrix{T}    = h5read(filename, "PartType0/TreecolColumnDensitiesH2");
+    #col_CO::Matrix{T}    = h5read(filename, "PartType0/TreecolColumnDensitiesCO");
 
-    N_star::Int64 = header["NumPart_ThisFile"][5]
+    #Tdust::Vector{T}    = h5read(filename, "PartType0/DustTemperature");
 
-    pos_star::Matrix{T} = h5read(filename, "PartType4/Coordinates");
-    vel_star::Matrix{T} = h5read(filename, "PartType4/Velocities");
-    m_star::Vector{T}   = h5read(filename, "PartType4/Masses");
-    sftime::Vector{T}      = h5read(filename, "PartType4/StellarFormationTime");
-    id_star::Vector{Int64} = h5read(filename, "PartType4/ParticleIDs");
+    #N_star::Int64 = header["NumPart_ThisFile"][5]
+
+    #pos_star::Matrix{T} = h5read(filename, "PartType4/Coordinates");
+    #vel_star::Matrix{T} = h5read(filename, "PartType4/Velocities");
+    #m_star::Vector{T}   = h5read(filename, "PartType4/Masses");
+    #sftime::Vector{T}      = h5read(filename, "PartType4/StellarFormationTime");
+    #id_star::Vector{Int64} = h5read(filename, "PartType4/ParticleIDs");
 
     return N_gas, pos_gas, vel_gas, rho, u, m_gas, hsml, id_gas,
-        abund, fH2ss, fH2dust, col_tot, col_H2, col_CO, Tdust,
-        N_star, pos_star, vel_star, m_star, sftime, id_star,
+        #abund, fH2ss, fH2dust, col_tot, col_H2, col_CO, Tdust,
+        #N_star, pos_star, vel_star, m_star, sftime, id_star,
         boxsize, time
 end
 
-#end
+end
