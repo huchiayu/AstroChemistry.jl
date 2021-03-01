@@ -1,9 +1,9 @@
 # AstroChemistry
 
-```AstroChemistry.jl``` is a package that solves a user-defined chemistry network in the astrophysical context, in particular for the interstellar medium. It can be used to post-process snapshots of hydrodynamical simulations with a built-in Octree that calculates the column densities for shielding against the FUV radiation.
+```AstroChemistry.jl``` is a package that solves a user-defined chemistry network in the astrophysical context, in particular for the interstellar medium. It can be used to post-process snapshots of hydrodynamical simulations with a built-in Octree that calculates the column densities for shielding against the FUV radiation. The chemistry coefficients are based on the [UMIST](http://udfa.ajmarkwick.net/index.php) database and the CO shielding is based on [Visser et al. 2009](https://home.strw.leidenuniv.nl/~ewine/photo/CO_photodissociation.html). The code is multithreading parallel using Julia's built-in functionality. 
 
 # Dependencies
-```AstroChemistry.jl``` makes use of the following packages:
+```AstroChemistry.jl``` makes use of the following Julia packages:
 - [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl)
 - [Parameters.jl](https://github.com/mauro3/Parameters.jl)
 - [DifferentialEquations.jl](https://github.com/SciML/DifferentialEquations.jl)
