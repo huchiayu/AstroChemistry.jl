@@ -1,6 +1,6 @@
 # AstroChemistry
 
-```AstroChemistry.jl``` is a package that solves a user-defined chemistry network in the astrophysical context, in particular for the interstellar medium. It can be used to post-process snapshots of hydrodynamical simulations with a built-in Octree that calculates the column densities for shielding against the FUV radiation. The chemistry coefficients are based on the [UMIST](http://udfa.ajmarkwick.net/index.php) database and the CO shielding is based on [Visser et al. 2009](https://home.strw.leidenuniv.nl/~ewine/photo/CO_photodissociation.html). The code is multithreading parallel using Julia's built-in functionality. 
+```AstroChemistry.jl``` is a package that solves a user-defined chemistry network for astrophysical applications (in particular for the interstellar medium). It can be used to post-process snapshots of hydrodynamical simulations with a built-in Octree that calculates the column densities for shielding against the FUV radiation. The chemistry coefficients are based on the [UMIST](http://udfa.ajmarkwick.net/index.php) database and the CO shielding is based on [Visser et al. 2009](https://home.strw.leidenuniv.nl/~ewine/photo/CO_photodissociation.html). The code is multithreading parallel using Julia's built-in functionality. 
 
 # Dependencies
 ```AstroChemistry.jl``` makes use of the following Julia packages:
@@ -8,6 +8,46 @@
 - [Parameters.jl](https://github.com/mauro3/Parameters.jl)
 - [DifferentialEquations.jl](https://github.com/SciML/DifferentialEquations.jl)
 - [Healpix.jl](https://github.com/ziotom78/Healpix.jl)
+
+# Installation
+Open the REPL (type ```julia``` in the terminal) and install the relevant packages:
+```
+import Pkg
+Pkg.add("StaticArrays")
+Pkg.add("Parameters")
+Pkg.add("DifferentialEquations")
+Pkg.add("Healpix")
+Pkg.add("AstroChemistry")
+```
+# Quick Start
+```
+using AstroChemistry
+
+#specify the chemical species in the network
+all_species = ["H", "H-", "H2", "H+", "H2+", "e-"]
+
+#initialize the network
+net, dict = initialize_chemistry_network(all_species, grRec=false)
+
+#initialize the total (gas-phase) elemental abundance
+abtot = AbundTotal()
+
+#specify the physical parameters
+nH, temp, ξ, IUV, Zp = 100., 20., 1e-16, 0., 1.
+par = Par{1,0,Float64}(nH=nH, temp=temp, ξ=ξ, IUV=IUV, Zp=Zp)
+
+#initialize the chemical abundance array
+N_spec = length(all_species)
+abund = zeros(N_spec)
+init_abund(abund, Zp, [], abtot, net)
+
+#solve the network
+dt = 1e10 #yr
+retcode, rr = solve_equilibrium_abundances(abund, dt, par, abtot, net)
+
+#print the final abundances of H+, H and H2
+@show retcode, abund[dict["H+"]], abund[dict["H"]], abund[dict["H2"]]
+```
 
 # Examples
 
