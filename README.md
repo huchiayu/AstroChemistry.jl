@@ -13,7 +13,7 @@
 ![PDRtest](https://user-images.githubusercontent.com/23061774/109493462-d1467d80-7a8c-11eb-94e4-3f03252bbf2c.png)
 
 - Post-processing results from a hydrodynamical simulation of the interstellar medium in the solar-neighborhood (Hu et al. 2021).
-![image](https://user-images.githubusercontent.com/23061774/109494139-c7714a00-7a8d-11eb-91e7-0615393e9cb9.png)
+![load_mol_maps_neq_620](https://user-images.githubusercontent.com/23061774/109495968-4d8e9000-7a90-11eb-8305-c6b22408bf66.png)
 
 # Author
 Chia-Yu Hu @ Max Planck Institute for Extraterrestrial Physics 
