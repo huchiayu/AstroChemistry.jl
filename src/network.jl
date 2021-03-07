@@ -4,7 +4,15 @@
     grRec::Bool
     SupTh::Bool
     ssC  ::Bool
-    iCion::Int32
+
+    iCion     :: Int32
+    iH2formGr :: Int32
+    iH2diss   :: Int32
+    iCOdiss   :: Int32
+    iHpRecGr  :: Int32
+    iHepRecGr :: Int32
+    iCpRecGr  :: Int32
+    iSipRecGr :: Int32
 
     fac_H ::SVector{N_spec,Int32}
     fac_He::SVector{N_spec,Int32}
@@ -287,7 +295,15 @@ function construct_index_arrays(reduced_network::Matrix{Any}, dict::Dict)
     beta_a  = zeros(N_reac)
     gamma_a = zeros(N_reac)
 
-    iCion = 0
+    iCion     = 0
+    iH2formGr = 0
+    iH2diss   = 0
+    iCOdiss   = 0
+    iHpRecGr  = 0
+    iHepRecGr = 0
+    iCpRecGr  = 0
+    iSipRecGr = 0
+
     for i in 1:N_reac
         num_a[i], t, R, P, alpha_a[i], beta_a[i], gamma_a[i] = read_umist_line(reduced_network[i,:])
         if any(R .== "C+") && any(R .== "e-")
@@ -304,6 +320,28 @@ function construct_index_arrays(reduced_network::Matrix{Any}, dict::Dict)
             iCion = i
             #@show alpha_a[i], gamma_a[i]
         end
+        if t=="GR" && any(R .== "H") && any(P .== "H2") #H2 photodissociation
+            iH2formGr = i
+        end
+        if any(R .== "H2") && any(R .== "PHOTON") && any(P .== "H") #H2 photodissociation
+            iH2diss = i
+        end
+        if any(R .== "CO") && any(R .== "PHOTON") && any(P .== "C") && any(P .== "O") #CO photodissociation
+            iCOdiss = i
+        end
+        if t=="GR" && any(R .== "H+") && any(R .== "e-") && any(P .== "H") && any(P .== "PHOTON") #H+ recomb. on grains
+            iHpRecGr = i
+        end
+        if t=="GR" && any(R .== "He+") && any(R .== "e-") && any(P .== "He") && any(P .== "PHOTON") #He+ recomb. on grains
+            iHepRecGr = i
+        end
+        if t=="GR" && any(R .== "C+") && any(R .== "e-") && any(P .== "C") && any(P .== "PHOTON") #C+ recomb. on grains
+            iCpRecGr = i
+        end
+        if t=="GR" && any(R .== "Si+") && any(R .== "e-") && any(P .== "Si") && any(P .== "PHOTON") #H+ recomb. on grains
+            iSipRecGr = i
+        end
+
 
         if any(R .== "PHOTON")
             typ_a[i] = 1
@@ -331,7 +369,8 @@ function construct_index_arrays(reduced_network::Matrix{Any}, dict::Dict)
         ir1_a[i], ir2_a[i] = dict[R[1]], dict[R[2]]
         ip1_a[i], ip2_a[i], ip3_a[i], ip4_a[i] = dict[P[1]], dict[P[2]], dict[P[3]], dict[P[4]]
     end
-    return typ_a, ir1_a, ir2_a, ip1_a, ip2_a, ip3_a, ip4_a, alpha_a, beta_a, gamma_a, iCion
+    return typ_a, ir1_a, ir2_a, ip1_a, ip2_a, ip3_a, ip4_a, alpha_a, beta_a, gamma_a,
+    iCion, iH2formGr, iH2diss, iCOdiss, iHpRecGr, iHepRecGr, iCpRecGr, iSipRecGr
 end
 function setup_conservation_arrays(elem::String, elements::Vector{Vector{String}}, counts::Vector{Vector{Int32}})
     N_spec = length(elements)
@@ -378,10 +417,22 @@ function initialize_chemistry_network(all_species::Vector{String};
     end
     reduced_network = umist[reac_num,:]
 
-
     #add 7 more reactions (H2 & CO dissociation & grain-processes)
     more_reactions = readdlm((@__DIR__)*"/user-rates.txt",':')
+    reac_num=[]
+    for i in 1:size(more_reactions,1)
+        #println(i)
+        n, t, R, P, a, b, c = read_umist_line(more_reactions[i,:])
+        if any(R[1].==all_species_2) && any(R[2].==all_species_2) && any(P[1].==all_species_2) && any(P[2].==all_species_2) && any(P[3].==all_species_2) && any(P[4].==all_species_2)
+            #print_reaction(n, t, R, P, a, b, c)
+            push!(reac_num,n)
+        end
+    end
+    @show reac_num
+    more_reactions = more_reactions[reac_num,:]
+    @show reac_num
     reduced_network = vcat(reduced_network, more_reactions);
+    print_all_reactions(reduced_network)
 
     N_reac = size(reduced_network, 1)
     #@show N_reac, N_spec
@@ -399,13 +450,21 @@ function initialize_chemistry_network(all_species::Vector{String};
     N_neq = length(species_noneq)
     ineq = SVector{N_neq,Int32}([dict[species_noneq[i]] for i in 1:N_neq])
 
-    typ, ir1, ir2, ip1, ip2, ip3, ip4, alpha, beta, gamma, iCion = construct_index_arrays(reduced_network, dict)
+    typ, ir1, ir2, ip1, ip2, ip3, ip4, alpha, beta, gamma,
+    iCion, iH2formGr, iH2diss, iCOdiss, iHpRecGr, iHepRecGr, iCpRecGr, iSipRecGr = construct_index_arrays(reduced_network, dict)
 
     net = Network{N_spec, N_reac, N_integrate, N_neq, Float64}(
     grRec = grRec,
     SupTh = SupTh,
     ssC   = ssC,
-    iCion = iCion,
+    iCion     = iCion    ,
+    iH2formGr = iH2formGr,
+    iH2diss   = iH2diss  ,
+    iCOdiss   = iCOdiss  ,
+    iHpRecGr  = iHpRecGr ,
+    iHepRecGr = iHepRecGr,
+    iCpRecGr  = iCpRecGr ,
+    iSipRecGr = iSipRecGr,
     species_noneq = species_noneq,
     fac_H  = setup_conservation_arrays("H" , elements, counts),
     fac_He = setup_conservation_arrays("He", elements, counts),

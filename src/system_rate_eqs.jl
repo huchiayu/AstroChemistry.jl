@@ -5,6 +5,7 @@
     ξ::T
     IUV::T
     Zp::T
+    D0::T
     NH ::SVector{NPIX,T} = zeros(NPIX)
     NH2::SVector{NPIX,T} = zeros(NPIX)
     NCO::SVector{NPIX,T} = zeros(NPIX)
@@ -14,9 +15,9 @@ end
 
 
 function calc_coeff!(coeff, par::Par, xelec, net::Network{N_spec, N_reac, N_integrate, N_neq, T}) where{N_spec, N_reac, N_integrate, N_neq, T}
-    @unpack nH, temp, NH, NH2, NCO, NC, ξ, IUV, Zp = par
-    @unpack typ, alpha, beta, gamma, grRec, SupTh, ssC, iCion = net
-    Av = NH .* (5.35e-22 * Zp)
+    @unpack nH, temp, NH, NH2, NCO, NC, ξ, IUV, Zp, D0 = par
+    @unpack typ, alpha, beta, gamma, grRec, SupTh, ssC, iCion, iH2formGr, iH2diss, iCOdiss, iHpRecGr, iHepRecGr, iCpRecGr, iSipRecGr = net
+    Av = NH .* (5.35e-22 * D0)
     ξp = ξ / ξ0;
     for i in 1:N_reac
         if typ[i] == 1
@@ -61,13 +62,20 @@ function calc_coeff!(coeff, par::Par, xelec, net::Network{N_spec, N_reac, N_inte
     coeff[re[1296]] = 2.58e-7 * (temp/300.)^(-0.5)
     =#
     #photodissociation
-    coeff[end]   = IUV * kH2diss * mean(@. exp(-gamma_H2 * Av) * fH2selfshield(NH2))
-    coeff[end-1] = IUV * kCOdiss * mean(@. exp(-gamma_CO * Av) * fCOselfshield(NCO,NH2))
+    if iH2diss > 0
+        coeff[iH2diss]   = IUV * kH2diss * mean(@. exp(-gamma_H2 * Av) * fH2selfshield(NH2))
+    end
+    if iCOdiss > 0
+        coeff[iCOdiss] = IUV * kCOdiss * mean(@. exp(-gamma_CO * Av) * fCOselfshield(NCO,NH2))
+    end
     #coeff[end-1] = fCOselfshield(1.,1.)
 
     #grain processes
     #coeff[end-2] = kdust * (temp / 100.)^0.5 * Zp
-    coeff[end-2] = get_kdust(temp) * Zp
+    if iH2formGr > 0
+        coeff[iH2formGr] = get_kdust(temp) * D0
+    end
+
     psi = 1e20 #large value will turn off grain recombination
     #@show grRec
     if grRec == true
@@ -81,10 +89,18 @@ function calc_coeff!(coeff, par::Par, xelec, net::Network{N_spec, N_reac, N_inte
         println("IUV=", IUV, "  AV=", Av, "  temp=", temp, "  nH=", nH, "  xelec=", xelec)
         error("psi<=0")
     end
-    coeff[end-3] = grain_recomb_H( temp, psi) * Zp
-    coeff[end-4] = grain_recomb_He(temp, psi) * Zp
-    coeff[end-5] = grain_recomb_C( temp, psi) * Zp
-    coeff[end-6] = grain_recomb_Si(temp, psi) * Zp
+    if iHpRecGr > 0
+        coeff[iHpRecGr]  = grain_recomb_H( temp, psi) * D0
+    end
+    if iHepRecGr > 0
+        coeff[iHepRecGr] = grain_recomb_He(temp, psi) * D0
+    end
+    if iCpRecGr > 0
+        coeff[iCpRecGr]  = grain_recomb_C( temp, psi) * D0
+    end
+    if iSipRecGr > 0
+        coeff[iSipRecGr] = grain_recomb_Si(temp, psi) * D0
+    end
 
     if ssC == true
         coeff[iCion] *= mean(@. fCselfshield(NC,NH2))
