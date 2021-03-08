@@ -1,7 +1,7 @@
 name = "AstroChemistry"
 uuid = "7f947402-6d9b-49de-a6e7-82c660dce669"
 authors = ["Chia-Yu Hu <cyhu.astro@gmail.com> and contributors"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
