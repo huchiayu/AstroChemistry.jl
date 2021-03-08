@@ -29,12 +29,12 @@ all_species = ["H", "H-", "H2", "H+", "H2+", "e-"]
 #initialize the network
 net, dict = initialize_chemistry_network(all_species, grRec=false)
 
-#initialize the total (gas-phase) elemental abundance
-abtot = AbundTotal() * Zp
-
 #specify the physical parameters
 nH, temp, ξ, IUV, Zp = 100., 20., 1e-16, 0., 1.
 par = Par{1,0,Float64}(nH=nH, temp=temp, ξ=ξ, IUV=IUV, Zp=Zp)
+
+#initialize the total (gas-phase) elemental abundance
+abtot = AbundTotal() * Zp
 
 #initialize the chemical abundance array
 N_spec = length(all_species)
