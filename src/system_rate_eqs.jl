@@ -5,7 +5,7 @@
     ξ::T
     IUV::T
     Zp::T
-    D0::T
+    D0::T = Zp
     NH ::SVector{NPIX,T} = zeros(NPIX)
     NH2::SVector{NPIX,T} = zeros(NPIX)
     NCO::SVector{NPIX,T} = zeros(NPIX)
@@ -71,7 +71,6 @@ function calc_coeff!(coeff, par::Par, xelec, net::Network{N_spec, N_reac, N_inte
     #coeff[end-1] = fCOselfshield(1.,1.)
 
     #grain processes
-    #coeff[end-2] = kdust * (temp / 100.)^0.5 * Zp
     if iH2formGr > 0
         coeff[iH2formGr] = get_kdust(temp) * D0
     end
@@ -129,15 +128,15 @@ function get_kdust(temp)
     Rdust  = ch7 * fa * stick
 end
 
-function init_abund(abund, Zp, xneq, abtot, net)
-    #abund[dict["C+"]] = abC_s * Zp
-    #abund[dict["O"]]  = abO_s * Zp
-    calc_abund_derived(abund, Zp, xneq, abtot, net)
+function init_abund(abund, xneq, abtot, net)
+    #abund[dict["C+"]] = abC * Zp
+    #abund[dict["O"]]  = abO * Zp
+    calc_abund_derived(abund, xneq, abtot, net)
 end
 
-function calc_abund_derived(abund, Zp, xneq, abtot::AbundTotal, net::Network{N_spec, N_reac, N_integrate, N_neq, T}) where{N_spec, N_reac, N_integrate, N_neq, T}
+function calc_abund_derived(abund, xneq, abtot::AbundTotal{T}, net::Network{N_spec, N_reac, N_integrate, N_neq, T}) where{N_spec, N_reac, N_integrate, N_neq, T}
 
-    @unpack abC_s, abO_s, abSi_s, abS_s, abN_s, abFe_s, abMg_s = abtot
+    @unpack abC, abO, abSi, abS, abN, abFe, abMg = abtot
     @unpack fac_H, fac_He, fac_C, fac_O, fac_Si, fac_S, fac_N, fac_Mg, fac_Fe, charge, ineq, iH, iHe, iC, iO, iSi, iS, iN, iMg, iFe, ielec = net
 
     if N_neq > 0
@@ -162,18 +161,18 @@ function calc_abund_derived(abund, Zp, xneq, abtot::AbundTotal, net::Network{N_s
 
     iH  > 0 ? abund[iH]  = 1.0 - sH : nothing
     iHe > 0 ? abund[iHe] = XHe - sHe : nothing
-    iC  > 0 ? abund[iC]  = abC_s * Zp - sC : nothing
-    iO  > 0 ? abund[iO]  = abO_s * Zp - sO : nothing
-    iS  > 0 ? abund[iS]  = abS_s * Zp - sS : nothing
-    iSi > 0 ? abund[iSi] = abSi_s * Zp - sSi : nothing
-    iN  > 0 ? abund[iN]  = abN_s * Zp - sN : nothing
-    iMg > 0 ? abund[iMg] = abMg_s * Zp - sMg : nothing
-    iFe > 0 ? abund[iFe] = abFe_s * Zp - sFe : nothing
+    iC  > 0 ? abund[iC]  = abC  - sC : nothing
+    iO  > 0 ? abund[iO]  = abO  - sO : nothing
+    iS  > 0 ? abund[iS]  = abS  - sS : nothing
+    iSi > 0 ? abund[iSi] = abSi - sSi : nothing
+    iN  > 0 ? abund[iN]  = abN  - sN : nothing
+    iMg > 0 ? abund[iMg] = abMg - sMg : nothing
+    iFe > 0 ? abund[iFe] = abFe - sFe : nothing
     ielec > 0 ? abund[ielec] = selec : nothing
 
 end
 
-function solve_equilibrium_abundances(abund, dtime, par::Par, abtot::AbundTotal, net::Network{N_spec, N_reac, N_integrate, N_neq, T}) where{N_spec, N_reac, N_integrate, N_neq, T}
+function solve_equilibrium_abundances(abund, dtime, par::Par, abtot::AbundTotal{T}, net::Network{N_spec, N_reac, N_integrate, N_neq, T}) where{N_spec, N_reac, N_integrate, N_neq, T}
 
     @unpack typ, ir1, ir2, ip1, ip2, ip3, ip4, pro3, pro4, alpha, beta, gamma, idx_integrate, ielec, iH2 = net
 
@@ -187,7 +186,7 @@ function solve_equilibrium_abundances(abund, dtime, par::Par, abtot::AbundTotal,
     @unpack nH, Zp, xneq = par
 
     max_abund_inv = zeros(N_spec)
-    get_max_abundance!(max_abund_inv, Zp, abtot, net)
+    get_max_abundance!(max_abund_inv, abtot, net)
 
     #we use closure s.t. large arrays like coeff & reac_rates can be updated in-place
     function calc_abund_dot_closure(abund_dot_int, abund_int, ppp, t)
@@ -195,7 +194,7 @@ function solve_equilibrium_abundances(abund, dtime, par::Par, abtot::AbundTotal,
         abund_dot .= 0.0 #in-place for better performance
 
         abund[idx_integrate] .= abund_int
-        calc_abund_derived(abund, Zp, xneq, abtot, net)
+        calc_abund_derived(abund, xneq, abtot, net)
 
         calc_coeff!(coeff, par, abund[ielec], net) #zero allocation
 
@@ -253,7 +252,7 @@ function solve_equilibrium_abundances(abund, dtime, par::Par, abtot::AbundTotal,
         maxiters=1e3,
         save_everystep=false);
     abund_final[idx_integrate] .= sol.u[end]
-    calc_abund_derived(abund_final, Zp, xneq, abtot, net)
+    calc_abund_derived(abund_final, xneq, abtot, net)
 
     abund .= abund_final
     speciesoutofbound(abund, max_abund_inv, Inf) #fixing OFB error
@@ -284,20 +283,21 @@ function speciesoutofbound(abund, max_abund_inv, ofbtol)
     return false
 end
 
-function get_max_abundance!(max_abund_inv, Zp, abtot::AbundTotal, net::Network)
+function get_max_abundance!(max_abund_inv, abtot::AbundTotal{T}, net::Network{N_spec, N_reac, N_integrate, N_neq, T}) where{N_spec, N_reac, N_integrate, N_neq, T}
+
     #update in-place
-    @unpack abC_s, abO_s, abSi_s, abS_s, abN_s, abFe_s, abMg_s = abtot
+    @unpack abC, abO, abSi, abS, abN, abFe, abMg = abtot
     @unpack fac_H, fac_He, fac_C, fac_O, fac_S, fac_Si, fac_N, fac_Mg, fac_Fe = net
     for i in eachindex(max_abund_inv)
         val = 0
         val = max(fac_H[i], fac_He[i]/XHe)
-        val = abC_s  > 0 ? max(fac_C[i] /(abC_s*Zp ), val) : val
-        val = abO_s  > 0 ? max(fac_O[i] /(abO_s*Zp ), val) : val
-        val = abS_s  > 0 ? max(fac_S[i] /(abS_s*Zp ), val) : val
-        val = abSi_s > 0 ? max(fac_Si[i]/(abSi_s*Zp), val) : val
-        val = abN_s  > 0 ? max(fac_N[i] /(abN_s*Zp ), val) : val
-        val = abMg_s > 0 ? max(fac_Mg[i]/(abMg_s*Zp), val) : val
-        val = abFe_s > 0 ? max(fac_Fe[i]/(abFe_s*Zp), val) : val
+        val = abC  > 0 ? max(fac_C[i] /abC , val) : val
+        val = abO  > 0 ? max(fac_O[i] /abO , val) : val
+        val = abS  > 0 ? max(fac_S[i] /abS , val) : val
+        val = abSi > 0 ? max(fac_Si[i]/abSi, val) : val
+        val = abN  > 0 ? max(fac_N[i] /abN , val) : val
+        val = abMg > 0 ? max(fac_Mg[i]/abMg, val) : val
+        val = abFe > 0 ? max(fac_Fe[i]/abFe, val) : val
         max_abund_inv[i] = val
     end
 end

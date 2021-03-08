@@ -44,8 +44,8 @@ function runPDR()
 
     net, dict = initialize_chemistry_network(all_species, grRec=false)
     @unpack iH2, iCO, iC, fac_H, fac_C, fac_O, charge = net
-    abtot = AbundTotal(abC_s=1e-4, abO_s=3e-4, abSi_s=0.0)
-    @unpack abC_s, abO_s, abSi_s = abtot
+    abtot = AbundTotal(abC=1e-4, abO=3e-4, abSi=0.0)
+    @unpack abC, abO, abSi = abtot
 
 
     nH = 1000.
@@ -96,11 +96,14 @@ function runPDR()
         #i==1 ? println("αG/2 = ", αG/2) : nothing
 
         xneq = SVector{0,T}([])
-        par = Par{1,0,T}(nH, temp, ξ, IUV, Zp, SVector{1,T}(NH), SVector{1,T}(NH2), SVector{1,T}(NCO), SVector{1,T}(NC), xneq)
+        #par = Par{1,0,T}(nH, temp, ξ, IUV, Zp, NH=SVector{1,T}(NH), NH2=SVector{1,T}(NH2), NCO=SVector{1,T}(NCO), NC=SVector{1,T}(NC), xneq=xneq)
+        par = Par{1,0,T}(nH=nH, temp=temp, ξ=ξ, IUV=IUV, Zp=Zp,
+        NH=[NH], NH2=[NH2], NCO=[NCO], NC=[NC], xneq=xneq)
+        #NH=SVector{1,T}(NH), NH2=SVector{1,T}(NH2), NCO=SVector{1,T}(NCO), NC=SVector{1,T}(NC), xneq=xneq)
 
         retcode, reaction_rates[i,:] = solve_equilibrium_abundances(ab_vs_x[i], dtime, par, abtot, net)
 
-        calc_abund_derived(ab_vs_x[i], Zp, xneq, abtot, net)
+        calc_abund_derived(ab_vs_x[i], xneq, abtot, net)
         sumH  = sum( ab_vs_x[i] .* fac_H )
         sumC  = sum( ab_vs_x[i] .* fac_C )
         sumO  = sum( ab_vs_x[i] .* fac_O )
@@ -108,10 +111,10 @@ function runPDR()
         #sumS  = sum( ab_vs_x[i] .* fac_S )
         sumelec = sum( ab_vs_x[i] .* charge )
         (1.0 ≈ sumH)  ? nothing : error("sumH = " , sumH)
-        (abC_s  * Zp ≈ sumC)  ? nothing : error("sumC = " , sumC)
-        (abO_s  * Zp ≈ sumO)  ? nothing : error("sumO = " , sumO)
-        #(abSi_s * Zp ≈ sumSi) ? nothing : error("sumSi = ", sumSi)
-        #(abS_s  * Zp ≈ sumS)  ? nothing : error("sumS = " , sumS)
+        (abC  ≈ sumC)  ? nothing : error("sumC = " , sumC)
+        (abO  ≈ sumO)  ? nothing : error("sumO = " , sumO)
+        #(abSi ≈ sumSi) ? nothing : error("sumSi = ", sumSi)
+        #(abS  ≈ sumS)  ? nothing : error("sumS = " , sumS)
         (1.0 ≈ 1.0 + sumelec) ? nothing : error("sumelec = ",sumelec)
     end
 

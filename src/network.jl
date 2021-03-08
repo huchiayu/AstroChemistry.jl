@@ -428,9 +428,8 @@ function initialize_chemistry_network(all_species::Vector{String};
             push!(reac_num,n)
         end
     end
-    @show reac_num
+    #@show reac_num
     more_reactions = more_reactions[reac_num,:]
-    @show reac_num
     reduced_network = vcat(reduced_network, more_reactions);
     print_all_reactions(reduced_network)
 
@@ -514,21 +513,50 @@ function initialize_chemistry_network(all_species::Vector{String};
 end
 
 
-@with_kw struct AbundTotal
-    abC_s = 1.4e-4
-    abO_s = 3.2e-4
-    # abSi_s = 0.0
-    # abSi_s = 1.5e-5
-    abSi_s = 1.7e-6 #depleted abundance
-    abS_s = 0.0
-    # abS_s = 1e-6
-    #abN_s = 7.6e-5
-    abN_s = 0.0
-    # abFe_s = 1.6e-6
-    # abMg_s = 1.4e-5
-    abFe_s = 0.0
-    abMg_s = 0.0
+@with_kw struct AbundTotal{T}
+    abC :: T = 1.4e-4
+    abO :: T = 3.2e-4
+    # abSi = 0.0
+    # abSi = 1.5e-5
+    abSi :: T = 1.7e-6 #depleted abundance
+    # abS = 1e-6
+    # abN = 7.6e-5
+    # abFe = 1.6e-6
+    # abMg = 1.4e-5
+    abS :: T = 0.0
+    abN :: T = 0.0
+    abFe :: T = 0.0
+    abMg :: T = 0.0
 end
+
+import Base.+
++(a::AbundTotal{T}, b::AbundTotal{T}) where {T<:Real} =
+AbundTotal{T}(
+a.abC  + b.abC ,
+a.abO  + b.abO ,
+a.abSi + b.abSi,
+a.abS  + b.abS ,
+a.abN  + b.abN ,
+a.abFe + b.abFe,
+a.abMg + b.abMg)
+
+import Base.-
+-(a::AbundTotal{T}, b::AbundTotal{T}) where {T<:Real} =
+AbundTotal{T}(
+a.abC  - b.abC ,
+a.abO  - b.abO ,
+a.abSi - b.abSi,
+a.abS  - b.abS ,
+a.abN  - b.abN ,
+a.abFe - b.abFe,
+a.abMg - b.abMg)
+
+import Base.*
+*(a::AbundTotal, c::T) where {T<:Real} = AbundTotal(c*a.abC, c*a.abO, c*a.abSi, c*a.abS, c*a.abN, c*a.abFe, c*a.abMg)
+*(c::T, a::AbundTotal) where {T<:Real} = *(a::AbundTotal, c::T)
+import Base./
+/(a::AbundTotal, c::T) where {T<:Real} = AbundTotal(a.abC/c, a.abO/c, a.abSi/c, a.abS/c, a.abN/c, a.abFe/c, a.abMg/c)
+
 
 #=
 function test()
