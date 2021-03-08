@@ -69,8 +69,8 @@ function solve_chem_all_particles(file_path, Zp)
 
     net, dict = initialize_chemistry_network(all_species)
     @unpack iH2, iCO, iC, fac_H, fac_C, fac_O, charge = net
-    abtot = AbundTotal()
-    @unpack abC_s, abO_s, abSi_s = abtot
+    abtot = AbundTotal() * Zp
+    @unpack abC, abO, abSi = abtot
 
 
     fname = file_path * "/snapshot.hdf5"
@@ -103,10 +103,10 @@ function solve_chem_all_particles(file_path, Zp)
     for i in 1:Npart
         xneq = SVector{N_neq,T}()
         #make sure the abC is consistent between simulations & postprocessing
-        abund_all[i][dict["C+"]] = abC_s * Zp
+        abund_all[i][dict["C+"]] = abC
         #initial guess for H2 & H+ (useful for calcultating steady state H2)
         #abund_all[i][dict["H2"]] = 0.49
-        init_abund(abund_all[i], Zp, xneq, abtot, net)
+        init_abund(abund_all[i], xneq, abtot, net)
     end
 
     NH_eff = zeros(Npart)
@@ -151,7 +151,8 @@ function solve_chem_all_particles(file_path, Zp)
             NCO_eff[i] = -log(mean(exp.(-NCO.*facNHtoAv_eff))) / facNHtoAv_eff
 
             xneq = SVector{N_neq,T}()
-            par = Par{NPIX,N_neq,T}(nH[i], temp[i], ξ, IUV, Zp,
+            if nH[i] > 1e5 nH[i] = 1e5 end
+            par = Par{NPIX,N_neq,T}(nH[i], temp[i], ξ, IUV, Zp, Zp,
                 SVector{NPIX,T}(NH),
                 SVector{NPIX,T}(NH2),
                 SVector{NPIX,T}(NCO),
@@ -210,7 +211,7 @@ function solve_chem_all_particles(file_path, Zp)
         if net.grRec == true
             fnamebase *= "GrRec-"
         end
-        fname = file_path * fnamebase * "-" * string(j) *".hdf5"
+        fname = file_path * fnamebase * string(j) *".hdf5"
         fid=h5open(fname,"w")
         grp_head = create_group(fid,"Header");
         attributes(fid["Header"])["all_species"] = all_species
