@@ -59,7 +59,7 @@ retcode, rr = solve_equilibrium_abundances(abund, dt, par, abtot, net)
 - The output image of [examples/PDRtest.jl](https://github.com/huchiayu/AstroChemistry.jl/blob/main/examples/PDRtest.jl).
 ![PDRtest](https://user-images.githubusercontent.com/23061774/109493462-d1467d80-7a8c-11eb-94e4-3f03252bbf2c.png)
 
-- Post-processing results from a hydrodynamical simulation of the interstellar medium in the solar-neighborhood ([Hu et al. 2021](https://arxiv.org/abs/2103.03889).
+- Post-processing results from a hydrodynamical simulation of the interstellar medium in the solar-neighborhood ([Hu et al. 2021](https://arxiv.org/abs/2103.03889)).
 ![load_mol_maps_neq_620](https://user-images.githubusercontent.com/23061774/109887710-82facf80-7c82-11eb-8753-085ae225e497.png)
 
 # Author
