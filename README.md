@@ -1,3 +1,6 @@
+[![DOI](https://zenodo.org/badge/336914329.svg)](https://zenodo.org/badge/latestdoi/336914329)
+
+
 # AstroChemistry
 
 ```AstroChemistry.jl``` is a package that solves a user-defined chemistry network for astrophysical applications (in particular for the interstellar medium). It can be used to post-process snapshots of hydrodynamical simulations with a built-in Octree that calculates the column densities for shielding against the FUV radiation. The chemistry coefficients are based on the [UMIST](http://udfa.ajmarkwick.net/index.php) database and the CO shielding is based on [Visser et al. 2009](https://home.strw.leidenuniv.nl/~ewine/photo/CO_photodissociation.html). The code is multithreading parallel using Julia's built-in functionality. 
